@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinaVoice AI - Chuyển văn bản thành giọng nói tiếng Việt tự nhiên</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent),
+                        radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.15), transparent),
+                        #0f172a;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Navigation / Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-indigo-500 to-pink-500 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-microphone-lines text-white text-xl animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        VinaVoice AI
+                    </h1>
+                    <p class="text-xs text-slate-400">Trình tạo giọng nói tiếng Việt tự nhiên thế hệ mới</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <!-- Status bar / API Key Indicator -->
+                <button onclick="toggleApiKeyModal()" id="apiKeyBtn" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 transition duration-150">
+                    <i class="fa-solid fa-key text-yellow-500" id="keyIcon"></i>
+                    <span id="keyStatusText">Khóa Canvas Tự Động</span>
+                </button>
+                <a href="#help" class="text-slate-400 hover:text-slate-200 text-sm hidden sm:inline" title="Hướng dẫn sử dụng">
+                    <i class="fa-regular fa-circle-question text-lg"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Input & Voice Setup (7 columns) -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- Quick preset categories -->
+            <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-lightbulb text-indigo-400 mr-1.5"></i> Chọn nhanh mẫu văn bản tiếng Việt
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="loadSampleText('news')" class="bg-slate-800 hover:bg-indigo-900/40 hover:border-indigo-500 border border-slate-700/60 text-slate-300 hover:text-indigo-200 px-3 py-1.5 rounded-lg text-xs transition duration-200">
+                        <i class="fa-solid fa-newspaper mr-1"></i> Tin Tức Thời Tiết
+                    </button>
+                    <button onclick="loadSampleText('story')" class="bg-slate-800 hover:bg-purple-900/40 hover:border-purple-500 border border-slate-700/60 text-slate-300 hover:text-purple-200 px-3 py-1.5 rounded-lg text-xs transition duration-200">
+                        <i class="fa-solid fa-book-open mr-1"></i> Truyện Cổ Tích
+                    </button>
+                    <button onclick="loadSampleText('ads')" class="bg-slate-800 hover:bg-pink-900/40 hover:border-pink-500 border border-slate-700/60 text-slate-300 hover:text-pink-200 px-3 py-1.5 rounded-lg text-xs transition duration-200">
+                        <i class="fa-solid fa-rectangle-ad mr-1"></i> Quảng Cáo Sản Phẩm
+                    </button>
+                    <button onclick="loadSampleText('poem')" class="bg-slate-800 hover:bg-teal-900/40 hover:border-teal-500 border border-slate-700/60 text-slate-300 hover:text-teal-200 px-3 py-1.5 rounded-lg text-xs transition duration-200">
+                        <i class="fa-solid fa-feather mr-1"></i> Thơ Ca Sâu Lắng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Text Box -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl relative">
+                <div class="flex justify-between items-center mb-3">
+                    <label for="textToSpeak" class="text-sm font-semibold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-pen-fancy text-indigo-400 mr-2"></i> Nhập văn bản cần đọc
+                    </label>
+                    <div class="flex items-center space-x-3 text-xs text-slate-400">
+                        <span id="charCounter">0 / 5000 ký tự</span>
+                        <button onclick="clearText()" class="text-slate-500 hover:text-red-400 transition" title="Xóa toàn bộ">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                <textarea id="textToSpeak" rows="6" maxlength="5000" oninput="updateCharCount()"
+                    placeholder="Hãy nhập văn bản tiếng Việt của bạn tại đây để chuyển đổi thành giọng nói... Ví dụ: 'Chào mừng các bạn đến với ứng dụng chuyển văn bản thành giọng nói tiếng Việt tự nhiên VinaVoice AI.'"
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none text-sm leading-relaxed"></textarea>
+            </div>
+
+            <!-- Voice and Style Selection Box -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5">
+                <h3 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center">
+                    <i class="fa-solid fa-sliders-h text-pink-400 mr-2"></i> Tinh chỉnh cấu hình giọng đọc
+                </h3>
+
+                <!-- Region Accent Selection -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Chọn Giọng Vùng Miền (Accent)</label>
+                    <div class="grid grid-cols-3 gap-2" id="accentGrid">
+                        <button onclick="selectAccent('north')" id="accent-north" class="bg-indigo-950/40 hover:bg-slate-800/50 text-slate-200 border-2 border-indigo-500 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition">
+                            <i class="fa-solid fa-map-pin text-indigo-400"></i>
+                            <span>Miền Bắc</span>
+                        </button>
+                        <button onclick="selectAccent('central')" id="accent-central" class="bg-slate-950 hover:bg-slate-800/50 text-slate-300 border border-slate-800 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition">
+                            <i class="fa-solid fa-map-pin text-slate-500"></i>
+                            <span>Miền Trung</span>
+                        </button>
+                        <button onclick="selectAccent('south')" id="accent-south" class="bg-slate-950 hover:bg-slate-800/50 text-slate-300 border border-slate-800 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition">
+                            <i class="fa-solid fa-map-pin text-slate-500"></i>
+                            <span>Miền Nam</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Choose Voice Model -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Chọn Giọng Đọc (Mẫu Giọng AI)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="voiceGrid">
+                        
+                        <div onclick="selectVoice('Leda', 'female')" id="v-Leda" class="voice-card border border-indigo-500/30 bg-indigo-950/20 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center justify-between border-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400">
+                                    <i class="fa-solid fa-venus text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-200">Leda</h4>
+                                    <p class="text-xs text-slate-400">Giọng Nữ Ngọt Ngào, Trẻ Trung</p>
+                                </div>
+                            </div>
+                            <span class="text-indigo-400 text-xs font-semibold">Mặc định</span>
+                        </div>
+
+                        <div onclick="selectVoice('Kore', 'female')" id="v-Kore" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400">
+                                    <i class="fa-solid fa-venus text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-200">Kore</h4>
+                                    <p class="text-xs text-slate-400">Giọng Nữ Chững Chạc, Ấm Áp</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectVoice('Puck', 'male')" id="v-Puck" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                    <i class="fa-solid fa-mars text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-200">Puck</h4>
+                                    <p class="text-xs text-slate-400">Giọng Nam Năng Động, Sáng Sủa</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div onclick="selectVoice('Charon', 'male')" id="v-Charon" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                                    <i class="fa-solid fa-mars text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-200">Charon</h4>
+                                    <p class="text-xs text-slate-400">Giọng Nam Trầm Ấm, Bản Lĩnh</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Collapsible Additional Voices -->
+                    <div class="mt-2 text-right">
+                        <button onclick="toggleAllVoices()" class="text-xs text-indigo-400 hover:text-indigo-300 transition font-medium">
+                            <span id="toggleVoicesText">Xem thêm nhiều giọng khác</span> <i class="fa-solid fa-chevron-down ml-1" id="toggleVoicesIcon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Hidden grid of voices -->
+                    <div id="extendedVoices" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-800/60">
+                        <div onclick="selectVoice('Erinome', 'female')" id="v-Erinome" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-300">
+                                <i class="fa-solid fa-venus"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-200">Erinome</h4>
+                                <p class="text-xs text-slate-400">Giọng nữ truyền cảm, trong trẻo</p>
+                            </div>
+                        </div>
+                        <div onclick="selectVoice('Fenrir', 'male')" id="v-Fenrir" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-full bg-indigo-500/10 flex items-center justify-center text-orange-400">
+                                <i class="fa-solid fa-mars"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-200">Fenrir</h4>
+                                <p class="text-xs text-slate-400">Giọng nam dứt khoát, mạnh mẽ</p>
+                            </div>
+                        </div>
+                        <div onclick="selectVoice('Despina', 'female')" id="v-Despina" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-full bg-pink-500/10 flex items-center justify-center text-rose-300">
+                                <i class="fa-solid fa-venus"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-200">Despina</h4>
+                                <p class="text-xs text-slate-400">Giọng nữ mượt mà, sâu lắng</p>
+                            </div>
+                        </div>
+                        <div onclick="selectVoice('Zephyr', 'female')" id="v-Zephyr" class="voice-card border border-slate-800 bg-slate-950 hover:bg-slate-800/50 p-3 rounded-xl cursor-pointer transition flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-full bg-pink-500/10 flex items-center justify-center text-purple-300">
+                                <i class="fa-solid fa-venus"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-200">Zephyr</h4>
+                                <p class="text-xs text-slate-400">Giọng nữ sáng và cao rộng</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sắc thái biểu cảm & Phong cách -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="readingStyle" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                            Sắc thái & Phong cách đọc
+                        </label>
+                        <select id="readingStyle" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="natural">Tự nhiên & Trôi chảy (Đàm thoại)</option>
+                            <option value="story">Kể chuyện cổ tích, Sách nói (Truyền cảm)</option>
+                            <option value="news">Phát thanh viên chuyên nghiệp (Chuẩn chỉnh)</option>
+                            <option value="marketing">Năng động, Hào hứng (Quảng cáo/Sản phẩm)</option>
+                            <option value="gentle">Thủ thỉ, Nhẹ nhàng (Thư giãn/Tâm sự)</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Playback speed -->
+                    <div>
+                        <label for="playbackRate" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
+                            <span>Tốc độ đọc</span>
+                            <span id="speedVal" class="text-indigo-400 font-bold">1.0x</span>
+                        </label>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs text-slate-500">Chậm</span>
+                            <input type="range" id="playbackRate" min="0.7" max="1.6" step="0.1" value="1.0" oninput="updateSpeedVal()"
+                                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            <span class="text-xs text-slate-500">Nhanh</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Action Button -->
+                <div>
+                    <button id="convertBtn" onclick="generateSpeech()" class="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg shadow-indigo-500/20 flex items-center justify-center space-x-3 text-sm md:text-base">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Chuyển Thành Giọng Nói (TTS)</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Right Column: Visualizer & Audio Control & History (5 columns) -->
+        <section class="lg:col-span-5 space-y-6 flex flex-col">
+            
+            <!-- Audio Output & Visualizer Panel -->
+            <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-xl flex-grow flex flex-col justify-between min-h-[350px]">
+                
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-volume-high text-indigo-400 mr-2"></i> Trình Phát Giọng Nói AI
+                    </h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 uppercase tracking-wider" id="playerStatus">
+                        Sẵn Sàng
+                    </span>
+                </div>
+
+                <!-- Main Visualizer Area -->
+                <div class="relative flex-grow flex flex-col items-center justify-center py-6">
+                    <canvas id="visualizer" class="w-full h-32 bg-slate-950 rounded-xl border border-slate-900/60 shadow-inner mb-4"></canvas>
+                    
+                    <div id="waveformAlternative" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden">
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center mx-auto mb-3 border border-indigo-500/20">
+                                <i class="fa-solid fa-music text-indigo-400 text-xl animate-bounce"></i>
+                            </div>
+                            <p class="text-xs text-slate-500">Đang chuẩn bị sóng âm thanh...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Element Container (Native Custom-Styled) -->
+                <div class="space-y-4">
+                    <!-- Standard Audio Element hidden, we control it via JS custom UI -->
+                    <audio id="mainAudioPlayer" class="hidden"></audio>
+
+                    <!-- Custom Player Controls -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span id="currentTime" class="text-xs text-slate-500 font-mono">00:00</span>
+                            
+                            <!-- Custom Progress bar -->
+                            <div class="flex-grow mx-4 relative group cursor-pointer" id="progressBarContainer" onclick="seekAudio(event)">
+                                <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                    <div id="audioProgressBar" class="h-full bg-gradient-to-r from-indigo-500 to-pink-500 w-0 transition-all duration-75"></div>
+                                </div>
+                            </div>
+                            
+                            <span id="durationTime" class="text-xs text-slate-500 font-mono">00:00</span>
+                        </div>
+
+                        <!-- Action Controls Row -->
+                        <div class="flex items-center justify-between pt-1">
+                            <!-- Left: Download Button -->
+                            <button id="downloadBtn" disabled onclick="downloadAudio()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" title="Tải xuống WAV">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+
+                            <!-- Center: Play/Pause Big Button -->
+                            <button id="playPauseBtn" disabled onclick="togglePlay()" class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 text-white flex items-center justify-center hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150">
+                                <i class="fa-solid fa-play text-lg ml-0.5" id="playIcon"></i>
+                            </button>
+
+                            <!-- Right: Replay Button -->
+                            <button id="replayBtn" disabled onclick="restartAudio()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" title="Nghe lại">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Voice specifications details info -->
+                    <div class="text-center text-xs text-slate-500" id="currentMetaText">
+                        Chưa có giọng nói nào được tạo. Nhấn "Chuyển thành giọng nói" để bắt đầu.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- History of Generated Snippets -->
+            <div class="bg-slate-900/40 border border-slate-800 rounded-3xl p-5 shadow-xl max-h-[250px] overflow-y-auto flex flex-col justify-start">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-clock-rotate-left mr-1"></i> Lịch sử tạo giọng (Phiên làm việc)</span>
+                    <button onclick="clearHistory()" class="text-[10px] text-red-400/80 hover:text-red-400 transition" id="clearHistoryBtn" style="display: none;">Xóa hết</button>
+                </h3>
+                
+                <div id="historyList" class="space-y-2 flex-grow overflow-y-auto">
+                    <!-- Placeholder when empty -->
+                    <div id="emptyHistory" class="text-center py-6">
+                        <i class="fa-solid fa-folder-open text-slate-700 text-2xl mb-1"></i>
+                        <p class="text-xs text-slate-600">Lịch sử trống</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Guide / FAQ block -->
+    <section id="help" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80">
+        <h2 class="text-lg font-bold text-slate-200 mb-4 flex items-center">
+            <i class="fa-solid fa-circle-question text-indigo-400 mr-2"></i> Làm thế nào để có giọng đọc tốt nhất?
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-400">
+            <div class="bg-slate-900/20 p-4 rounded-xl border border-slate-800/60">
+                <h3 class="font-bold text-slate-300 mb-1.5 flex items-center">
+                    <span class="w-5 h-5 bg-indigo-500/10 text-indigo-400 flex items-center justify-center rounded text-xs font-mono mr-2">01</span> Chọn vùng miền chính xác
+                </h3>
+                <p class="text-xs leading-relaxed">Bộ lọc vùng miền tích hợp sâu trực tiếp vào lõi AI giúp chuyển dịch phương ngữ và nhịp điệu đọc chuẩn vị miền Bắc, miền Trung hoặc miền Nam Việt Nam.</p>
+            </div>
+            <div class="bg-slate-900/20 p-4 rounded-xl border border-slate-800/60">
+                <h3 class="font-bold text-slate-300 mb-1.5 flex items-center">
+                    <span class="w-5 h-5 bg-purple-500/10 text-purple-400 flex items-center justify-center rounded text-xs font-mono mr-2">02</span> Dấu câu rõ ràng
+                </h3>
+                <p class="text-xs leading-relaxed">Sử dụng đầy đủ dấu chấm (.), dấu phẩy (,), dấu chấm hỏi (?) và dấu chấm than (!). Hệ thống TTS sẽ tự động ngắt hơi, lên tông/xuống tông chân thật nhất dựa trên dấu câu.</p>
+            </div>
+            <div class="bg-slate-900/20 p-4 rounded-xl border border-slate-800/60">
+                <h3 class="font-bold text-slate-300 mb-1.5 flex items-center">
+                    <span class="w-5 h-5 bg-pink-500/10 text-pink-400 flex items-center justify-center rounded text-xs font-mono mr-2">03</span> Thể loại giọng nói
+                </h3>
+                <p class="text-xs leading-relaxed">Để đảm bảo đúng phong cách và giới tính, hệ thống đã tinh lọc chi tiết các tệp giọng nam (Puck, Charon, Fenrir) và giọng nữ (Leda, Kore, Erinome, Despina, Zephyr).</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Key Configuration Modal -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-100 flex items-center">
+                    <i class="fa-solid fa-key text-yellow-500 mr-2"></i> Cấu hình Gemini API Key
+                </h3>
+                <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-400 leading-relaxed">
+                Khi chạy trên môi trường Canvas, ứng dụng đã tự động tiêm khóa API thích hợp để phục vụ quá trình chuyển đổi. Trong trường hợp bạn sử dụng ứng dụng độc lập hoặc khóa mặc định bị giới hạn, hãy cấu hình khóa của riêng bạn bên dưới.
+            </p>
+
+            <div class="space-y-1.5">
+                <label for="customApiKey" class="block text-xs font-semibold text-slate-300">Khóa API của bạn</label>
+                <input type="password" id="customApiKey" placeholder="AIzaSy..."
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="flex space-x-2 pt-2 justify-end">
+                <button onclick="removeCustomKey()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 border border-red-900/30 text-xs px-3 py-2 rounded-xl transition">
+                    Xóa Key riêng
+                </button>
+                <button onclick="saveApiKey()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded-xl transition font-medium">
+                    Lưu cấu hình
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification / Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none max-w-sm w-full"></div>
+
+    <!-- Global Processing Overlay -->
+    <div id="processingOverlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex-col items-center justify-center z-50">
+        <div class="text-center space-y-4">
+            <div class="relative w-20 h-20 mx-auto">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-pink-500 border-b-transparent animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="fa-solid fa-wave-square text-indigo-400 text-xl animate-pulse"></i>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-base font-bold text-slate-200" id="loaderTitle">Đang chuyển đổi văn bản...</h4>
+                <p class="text-xs text-slate-500 mt-1" id="loaderSubtitle">Sử dụng mô hình gemini-2.5-flash-preview-tts</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="mb-1">VinaVoice AI - Built with Gemini TTS technology & Web Audio API Visualizer</p>
+            <p>&copy; 2026. Tất cả các quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        // Global variables state
+        let currentVoice = 'Leda';
+        let currentGender = 'female';
+        let currentAccent = 'north';
+        let activeAudioBlob = null;
+        let activeAudioUrl = null;
+        let generatedHistory = [];
+        
+        // Web Audio Visualizer states
+        let audioCtx = null;
+        let analyser = null;
+        let sourceNode = null;
+        let animationFrameId = null;
+
+        // Sample Texts
+        const textPresets = {
+            news: "Dự báo thời tiết hôm nay: Hà Nội có mây thay đổi, ngày nắng ráo, nhiệt độ dao động từ 28 đến 34 độ C. Chiều tối có thể có mưa rào rải rác vài nơi. Quý vị chú ý chuẩn bị ô dù khi đi ra ngoài.",
+            story: "Ngày xửa ngày xưa, ở một ngôi làng nhỏ ven sông, có một cậu bé vô cùng hiếu thảo tên là Tích Chu. Hằng ngày, Tích Chu làm việc chăm chỉ không quản mệt mỏi để giúp đỡ bà kính yêu của mình...",
+            ads: "Chào mừng các bạn đến với VinaVoice AI! Công nghệ chuyển đổi văn bản thành giọng nói thế hệ mới, mang lại trải nghiệm âm thanh chân thật, sống động và truyền cảm đến từng nốt cao.",
+            poem: "Sóng bắt đầu từ gió / Gió bắt đầu từ đâu? / Em cũng không biết nữa / Khi nào ta yêu nhau. Lòng em nhớ đến anh / Cả trong mơ còn thức."
+        };
+
+        // On window load setup initial UI elements
+        window.onload = function() {
+            // Load custom Key if stored
+            const storedKey = localStorage.getItem('vina_voice_gemini_key');
+            if (storedKey) {
+                document.getElementById('customApiKey').value = storedKey;
+                document.getElementById('keyStatusText').innerText = "Sử dụng API Key riêng";
+                document.getElementById('keyIcon').className = "fa-solid fa-key text-green-500";
+            }
+
+            // Load default sample
+            loadSampleText('ads');
+
+            // Setup Custom Audio Player Event Listeners
+            const audioPlayer = document.getElementById('mainAudioPlayer');
+            
+            audioPlayer.addEventListener('timeupdate', () => {
+                const cur = audioPlayer.currentTime;
+                const dur = audioPlayer.duration || 0;
+                
+                // Update time display
+                document.getElementById('currentTime').innerText = formatTime(cur);
+                if (dur > 0) {
+                    document.getElementById('durationTime').innerText = formatTime(dur);
+                    const percent = (cur / dur) * 100;
+                    document.getElementById('audioProgressBar').style.width = `${percent}%`;
+                }
+            });
+
+            audioPlayer.addEventListener('ended', () => {
+                document.getElementById('playIcon').className = "fa-solid fa-play text-lg ml-0.5";
+                document.getElementById('playerStatus').innerText = "Đã dừng";
+                document.getElementById('playerStatus').className = "px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700/60 uppercase tracking-wider";
+                
+                // Stop visualizer animation loop
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+            });
+
+            audioPlayer.addEventListener('play', () => {
+                document.getElementById('playIcon').className = "fa-solid fa-pause text-lg";
+                document.getElementById('playerStatus').innerText = "Đang phát";
+                document.getElementById('playerStatus').className = "px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-wider";
+                
+                // Start Visualizer
+                startVisualizer();
+            });
+
+            audioPlayer.addEventListener('pause', () => {
+                document.getElementById('playIcon').className = "fa-solid fa-play text-lg ml-0.5";
+                document.getElementById('playerStatus').innerText = "Tạm dừng";
+                document.getElementById('playerStatus').className = "px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 uppercase tracking-wider";
+            });
+
+            // Initialize visualizer empty canvas state
+            clearVisualizerCanvas();
+        };
+
+        function updateCharCount() {
+            const val = document.getElementById('textToSpeak').value;
+            document.getElementById('charCounter').innerText = `${val.length} / 5000 ký tự`;
+        }
+
+        function clearText() {
+            document.getElementById('textToSpeak').value = '';
+            updateCharCount();
+            showToast('Đã xóa hộp văn bản', 'info');
+        }
+
+        function loadSampleText(key) {
+            if (textPresets[key]) {
+                document.getElementById('textToSpeak').value = textPresets[key];
+                updateCharCount();
+                showToast(`Đã tải mẫu văn bản: ${key.toUpperCase()}`, 'success');
+            }
+        }
+
+        function updateSpeedVal() {
+            const speed = document.getElementById('playbackRate').value;
+            document.getElementById('speedVal').innerText = `${parseFloat(speed).toFixed(1)}x`;
+            
+            // Adjust rate live if already playing
+            const player = document.getElementById('mainAudioPlayer');
+            player.playbackRate = parseFloat(speed);
+        }
+
+        function selectAccent(accent) {
+            currentAccent = accent;
+            // Remove selection border rings from all accent buttons
+            ['north', 'central', 'south'].forEach(item => {
+                const btn = document.getElementById(`accent-${item}`);
+                if (btn) {
+                    btn.className = "bg-slate-950 hover:bg-slate-800/50 text-slate-300 border border-slate-800 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition";
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = "fa-solid fa-map-pin text-slate-500";
+                }
+            });
+
+            // Add visual highlights to active accent button
+            const activeBtn = document.getElementById(`accent-${accent}`);
+            if (activeBtn) {
+                activeBtn.className = "bg-indigo-950/40 hover:bg-slate-800/50 text-slate-200 border-2 border-indigo-500 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition";
+                const icon = activeBtn.querySelector('i');
+                if (icon) icon.className = "fa-solid fa-map-pin text-indigo-400";
+            }
+
+            const labels = {
+                north: 'Miền Bắc (Hà Nội)',
+                central: 'Miền Trung (Huế/Đà Nẵng)',
+                south: 'Miền Nam (Sài Gòn)'
+            };
+            showToast(`Đã chuyển phương ngữ: ${labels[accent]}`, 'success');
+        }
+
+        function selectVoice(voiceName, gender) {
+            currentVoice = voiceName;
+            currentGender = gender;
+
+            // Remove border rings from all cards
+            document.querySelectorAll('.voice-card').forEach(card => {
+                card.classList.remove('border-indigo-500/30', 'border-2', 'bg-indigo-950/20');
+                card.classList.add('border-slate-800', 'bg-slate-950');
+            });
+
+            // Add visual highlights to active card
+            const activeCard = document.getElementById(`v-${voiceName}`);
+            if (activeCard) {
+                activeCard.classList.remove('border-slate-800', 'bg-slate-950');
+                activeCard.classList.add('border-indigo-500/30', 'border-2', 'bg-indigo-950/20');
+            }
+
+            showToast(`Đã chọn giọng: ${voiceName} (${gender === 'female' ? 'Nữ' : 'Nam'})`, 'info');
+        }
+
+        function toggleAllVoices() {
+            const extended = document.getElementById('extendedVoices');
+            const icon = document.getElementById('toggleVoicesIcon');
+            const txt = document.getElementById('toggleVoicesText');
+
+            if (extended.classList.contains('hidden')) {
+                extended.classList.remove('hidden');
+                extended.classList.add('grid');
+                icon.className = "fa-solid fa-chevron-up ml-1";
+                txt.innerText = "Thu gọn danh sách";
+            } else {
+                extended.classList.add('hidden');
+                extended.classList.remove('grid');
+                icon.className = "fa-solid fa-chevron-down ml-1";
+                txt.innerText = "Xem thêm nhiều giọng khác";
+            }
+        }
+
+        function toggleApiKeyModal() {
+            const modal = document.getElementById('apiKeyModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function saveApiKey() {
+            const keyVal = document.getElementById('customApiKey').value.trim();
+            if (!keyVal) {
+                showToast('Hãy nhập khóa hợp lệ!', 'error');
+                return;
+            }
+            localStorage.setItem('vina_voice_gemini_key', keyVal);
+            document.getElementById('keyStatusText').innerText = "Sử dụng API Key riêng";
+            document.getElementById('keyIcon').className = "fa-solid fa-key text-green-500";
+            toggleApiKeyModal();
+            showToast('Đã lưu cấu hình API Key riêng', 'success');
+        }
+
+        function removeCustomKey() {
+            localStorage.removeItem('vina_voice_gemini_key');
+            document.getElementById('customApiKey').value = '';
+            document.getElementById('keyStatusText').innerText = "Khóa Canvas Tự Động";
+            document.getElementById('keyIcon').className = "fa-solid fa-key text-yellow-500";
+            toggleApiKeyModal();
+            showToast('Đã chuyển về khóa tự động của hệ thống', 'info');
+        }
+
+        // Converts Signed 16-bit PCM array buffer to standard WAV format blob
+        function pcmToWav(pcm16Data, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcm16Data.byteLength);
+            const view = new DataView(buffer);
+
+            // "RIFF" chunk descriptor
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16Data.byteLength, true);
+            writeString(view, 8, 'WAVE');
+
+            // "fmt " sub-chunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true); // Sub-chunk1 size (16 for PCM)
+            view.setUint16(20, 1, true);   // Audio format (1 for PCM)
+            view.setUint16(22, 1, true);   // Number of channels (1 channel = Mono)
+            view.setUint32(24, sampleRate, true); // Sample rate
+            view.setUint32(28, sampleRate * 2, true); // Byte rate (SampleRate * NumChannels * BitsPerSample/8)
+            view.setUint16(32, 2, true);   // Block align (NumChannels * BitsPerSample/8)
+            view.setUint16(34, 16, true);  // Bits per sample (16-bit PCM)
+
+            // "data" sub-chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16Data.byteLength, true);
+
+            // Write actual PCM data values
+            const pcmView = new Int16Array(buffer, 44);
+            pcmView.set(pcm16Data);
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        async function generateSpeech() {
+            const textToSpeak = document.getElementById('textToSpeak').value.trim();
+            if (!textToSpeak) {
+                showToast('Vui lòng nhập văn bản cần phát âm!', 'error');
+                return;
+            }
+
+            // Construct style instruction prefix based on region accent and style options
+            const selectedStyle = document.getElementById('readingStyle').value;
+            let styleInstruction = "";
+            let accentInstruction = "";
+            let genderInstruction = currentGender === 'female' ? "giọng NỮ (Female voice)" : "giọng NAM (Male voice)";
+
+            // Set regional accent guidance
+            if (currentAccent === 'north') {
+                accentInstruction = "phát âm chuẩn xác 100% bằng phương ngữ MIỀN BẮC Việt Nam (Northern Vietnamese accent, giọng Hà Nội rõ ràng chuẩn xác).";
+            } else if (currentAccent === 'central') {
+                accentInstruction = "phát âm chuẩn xác 100% bằng phương ngữ MIỀN TRUNG Việt Nam (Central Vietnamese accent, giọng Huế/Đà Nẵng truyền cảm mộc mạc).";
+            } else if (currentAccent === 'south') {
+                accentInstruction = "phát âm chuẩn xác 100% bằng phương ngữ MIỀN NAM Việt Nam (Southern Vietnamese accent, giọng Sài Gòn/TP.HCM mượt mà ngọt ngào phóng khoáng).";
+            }
+
+            // Set vocal performance style instruction
+            if (selectedStyle === 'natural') {
+                styleInstruction = `Hãy đọc tự nhiên, trôi chảy như đang hội thoại giao lưu đời thường.`;
+            } else if (selectedStyle === 'story') {
+                styleInstruction = `Hãy đọc thật truyền cảm, chậm rãi, ấm áp, giàu sắc thái cảm xúc lôi cuốn của người kể chuyện cổ tích hay sách nói.`;
+            } else if (selectedStyle === 'news') {
+                styleInstruction = `Hãy phát âm rõ ràng, chuẩn chính tả, mạch lạc, dứt khoát giống như một phát thanh viên đài truyền hình chuyên nghiệp.`;
+            } else if (selectedStyle === 'marketing') {
+                styleInstruction = `Hãy thể hiện sự năng động, hào hứng, tốc độ vừa phải đầy phấn khích cuốn hút để quảng cáo giới thiệu sản phẩm.`;
+            } else if (selectedStyle === 'gentle') {
+                styleInstruction = `Hãy đọc với ngữ khí nhẹ nhàng, êm dịu, ấm áp thủ thỉ tâm sự đầy sự đồng cảm.`;
+            }
+
+            // Assemble into a clear Director's Note standard schema to let Gemini guide the audio synthesizer
+            const finalPrompt = `[DIRECTOR_NOTES]
+Style: ${styleInstruction}
+Gender: Thể hiện đúng chất ${genderInstruction} cực kỳ tự nhiên và chân thật.
+Accent: Đọc hoàn toàn chuẩn xác bằng ${accentInstruction}
+
+Text content to speak:
+"${textToSpeak}"`;
+
+            // Display loading screen
+            document.getElementById('processingOverlay').classList.remove('hidden');
+            document.getElementById('processingOverlay').classList.add('flex');
+
+            // API key prioritization
+            let apiKey = localStorage.getItem('vina_voice_gemini_key') || "";
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            // Construct the payload for TTS
+            const payload = {
+                contents: [{
+                    parts: [{ text: finalPrompt }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: currentVoice }
+                        }
+                    }
+                }
+            };
+
+            try {
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || `Lỗi HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const base64AudioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (base64AudioData && mimeType && mimeType.startsWith("audio/")) {
+                    let sampleRate = 24000; // default for Gemini TTS 
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    if (rateMatch) {
+                        sampleRate = parseInt(rateMatch[1], 10);
+                    }
+
+                    // Convert signed PCM 16-bit to standard WAV Blob
+                    const pcmBuffer = base64ToArrayBuffer(base64AudioData);
+                    const pcm16 = new Int16Array(pcmBuffer);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+
+                    // Revoke old object URL to prevent memory leak
+                    if (activeAudioUrl) {
+                        URL.revokeObjectURL(activeAudioUrl);
+                    }
+
+                    activeAudioBlob = wavBlob;
+                    activeAudioUrl = URL.createObjectURL(wavBlob);
+
+                    // Load audio URL inside the player
+                    const player = document.getElementById('mainAudioPlayer');
+                    player.src = activeAudioUrl;
+                    
+                    // Enable player UI elements
+                    document.getElementById('playPauseBtn').disabled = false;
+                    document.getElementById('downloadBtn').disabled = false;
+                    document.getElementById('replayBtn').disabled = false;
+
+                    // Update UI meta details
+                    const wordsCount = textToSpeak.split(/\s+/).filter(Boolean).length;
+                    const accentLabel = currentAccent === 'north' ? 'Miền Bắc' : (currentAccent === 'central' ? 'Miền Trung' : 'Miền Nam');
+                    const metaStr = `Giọng: ${currentVoice} (${currentGender === 'female' ? 'Nữ' : 'Nam'}) | ${accentLabel} | ~${wordsCount} từ | ${sampleRate / 1000}kHz`;
+                    document.getElementById('currentMetaText').innerText = metaStr;
+
+                    // Automatically update rate speed based on slider
+                    updateSpeedVal();
+
+                    // Push to history
+                    addToHistory(textToSpeak, currentVoice, currentGender, currentAccent, selectedStyle, activeAudioUrl, wavBlob);
+
+                    showToast('Đã chuyển đổi thành công! Sẵn sàng phát.', 'success');
+                    
+                    // Auto-play generated audio
+                    player.play();
+                } else {
+                    throw new Error('Dữ liệu trả về từ API không chứa nội dung âm thanh hợp lệ.');
+                }
+
+            } catch (err) {
+                console.error(err);
+                showToast(`Lỗi: ${err.message}`, 'error');
+            } finally {
+                // Hide Loader
+                document.getElementById('processingOverlay').classList.add('hidden');
+                document.getElementById('processingOverlay').classList.remove('flex');
+            }
+        }
+
+        // Exponential backoff to avoid api throttling rate limit (HTTP 429)
+        async function fetchWithRetry(url, options, retries = 3, backoff = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429 && retries > 0) {
+                    showToast('Hệ thống đang quá tải, thử lại trong giây lát...', 'warning');
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+                }
+                return response;
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+                }
+                throw err;
+            }
+        }
+
+        function addToHistory(text, voice, gender, accent, style, url, blob) {
+            // Cut text if too long for history display
+            const shortText = text.length > 50 ? text.substring(0, 50) + "..." : text;
+            const id = Date.now();
+            
+            const item = {
+                id,
+                text,
+                shortText,
+                voice,
+                gender,
+                accent,
+                style,
+                url,
+                blob
+            };
+
+            generatedHistory.unshift(item); // insert at top
+
+            // Update UI
+            document.getElementById('emptyHistory').style.display = 'none';
+            document.getElementById('clearHistoryBtn').style.display = 'block';
+
+            const historyList = document.getElementById('historyList');
+            
+            const historyItem = document.createElement('div');
+            historyItem.id = `hist-${id}`;
+            historyItem.className = "flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 hover:border-indigo-500/50 transition text-xs";
+            
+            const styleLabel = getStyleLabel(style);
+            const accentLabel = accent === 'north' ? 'Bắc' : (accent === 'central' ? 'Trung' : 'Nam');
+            const genderColor = gender === 'female' ? 'text-pink-400' : 'text-indigo-400';
+
+            historyItem.innerHTML = `
+                <div class="flex-grow pr-3 cursor-pointer" onclick="playHistoryItem(${id})">
+                    <p class="text-slate-200 font-medium line-clamp-1">${shortText}</p>
+                    <div class="flex items-center space-x-2 text-[10px] text-slate-500 mt-1">
+                        <span class="${genderColor} font-bold"><i class="fa-solid fa-microphone"></i> ${voice}</span>
+                        <span>•</span>
+                        <span class="text-teal-400 font-semibold">${accentLabel}</span>
+                        <span>•</span>
+                        <span class="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded text-[9px] font-medium">${styleLabel}</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1 flex-shrink-0">
+                    <button onclick="playHistoryItem(${id})" class="w-7 h-7 rounded-lg bg-indigo-950/40 text-indigo-400 hover:bg-indigo-950 hover:text-indigo-300 flex items-center justify-center transition" title="Nghe lại">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <button onclick="downloadHistoryItem(${id})" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 flex items-center justify-center transition" title="Tải xuống">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                </div>
+            `;
+
+            historyList.insertBefore(historyItem, historyList.firstChild);
+        }
+
+        function playHistoryItem(id) {
+            const item = generatedHistory.find(x => x.id === id);
+            if (item) {
+                activeAudioBlob = item.blob;
+                activeAudioUrl = item.url;
+                
+                const player = document.getElementById('mainAudioPlayer');
+                player.src = activeAudioUrl;
+                
+                // Enable player UI elements
+                document.getElementById('playPauseBtn').disabled = false;
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('replayBtn').disabled = false;
+
+                // Sync Meta Text
+                const wordsCount = item.text.split(/\s+/).filter(Boolean).length;
+                const accentLabel = item.accent === 'north' ? 'Miền Bắc' : (item.accent === 'central' ? 'Miền Trung' : 'Miền Nam');
+                const metaStr = `Lịch sử: Giọng ${item.voice} (${item.gender === 'female' ? 'Nữ' : 'Nam'}) | ${accentLabel} | ~${wordsCount} từ`;
+                document.getElementById('currentMetaText').innerText = metaStr;
+
+                // Update controls
+                updateSpeedVal();
+                player.play();
+                showToast(`Đang phát lịch sử: Giọng ${item.voice}`, 'info');
+            }
+        }
+
+        function downloadHistoryItem(id) {
+            const item = generatedHistory.find(x => x.id === id);
+            if (item) {
+                const link = document.createElement('a');
+                link.href = item.url;
+                link.download = `VinaVoice_${item.voice}_${item.style}_${id}.wav`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast('Đã bắt đầu tải file xuống', 'success');
+            }
+        }
+
+        function clearHistory() {
+            generatedHistory = [];
+            document.getElementById('historyList').innerHTML = '';
+            document.getElementById('emptyHistory').style.display = 'block';
+            document.getElementById('clearHistoryBtn').style.display = 'none';
+            showToast('Đã xóa toàn bộ lịch sử', 'info');
+        }
+
+        function getStyleLabel(style) {
+            switch(style) {
+                case 'natural': return 'Tự nhiên';
+                case 'story': return 'Kể chuyện';
+                case 'news': return 'Thời sự';
+                case 'marketing': return 'Quảng cáo';
+                case 'gentle': return 'Nhẹ nhàng';
+                default: return 'Tiêu chuẩn';
+            }
+        }
+
+        // Main Audio Player Controls
+        function togglePlay() {
+            const player = document.getElementById('mainAudioPlayer');
+            if (player.paused) {
+                player.play();
+            } else {
+                player.pause();
+            }
+        }
+
+        function restartAudio() {
+            const player = document.getElementById('mainAudioPlayer');
+            player.currentTime = 0;
+            player.play();
+            showToast('Bắt đầu lại âm thanh', 'info');
+        }
+
+        function downloadAudio() {
+            if (activeAudioUrl) {
+                const link = document.createElement('a');
+                link.href = activeAudioUrl;
+                link.download = `VinaVoice_AI_export.wav`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast('Bắt đầu tải giọng nói (WAV)', 'success');
+            }
+        }
+
+        function seekAudio(event) {
+            const player = document.getElementById('mainAudioPlayer');
+            if (!player.duration) return;
+
+            const progressContainer = document.getElementById('progressBarContainer');
+            const rect = progressContainer.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const containerWidth = rect.width;
+            
+            const percentage = clickX / containerWidth;
+            player.currentTime = percentage * player.duration;
+        }
+
+        // Helper: Time Formatter (00:00)
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Real-time frequency visualizer canvas using Web Audio API
+        function startVisualizer() {
+            const player = document.getElementById('mainAudioPlayer');
+            
+            // Check if AudioContext needs to be created
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                
+                // Route player through custom source node
+                sourceNode = audioCtx.createMediaElementSource(player);
+                sourceNode.connect(analyser);
+                analyser.connect(audioCtx.destination);
+            }
+
+            // Ensure Context is running (browsers might block it initially without user click)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            analyser.fftSize = 64;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            const canvas = document.getElementById('visualizer');
+            const canvasCtx = canvas.getContext('2d');
+
+            function draw() {
+                animationFrameId = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                canvasCtx.fillStyle = '#090d16'; // Deep background
+                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const barWidth = (canvas.width / bufferLength) * 1.5;
+                let barHeight;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    // Height calculation with multiplier for visual dynamics
+                    barHeight = (dataArray[i] / 255) * canvas.height * 0.9;
+
+                    // Neon violet/indigo to pink gradient
+                    const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, 0);
+                    gradient.addColorStop(0, '#6366f1'); // Indigo-500
+                    gradient.addColorStop(0.5, '#a855f7'); // Purple-500
+                    gradient.addColorStop(1, '#ec4899'); // Pink-500
+
+                    canvasCtx.fillStyle = gradient;
+                    
+                    // Draw symmetric visualizer bar
+                    canvasCtx.fillRect(x, (canvas.height - barHeight) / 2, barWidth - 2, barHeight);
+
+                    x += barWidth;
+                }
+            }
+
+            // Stop any preceding animation before spawning next loop
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            draw();
+        }
+
+        function clearVisualizerCanvas() {
+            const canvas = document.getElementById('visualizer');
+            const canvasCtx = canvas.getContext('2d');
+            canvasCtx.fillStyle = '#090d16';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw clean flat baseline
+            canvasCtx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
+            canvasCtx.lineWidth = 2;
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(0, canvas.height / 2);
+            canvasCtx.lineTo(canvas.width, canvas.height / 2);
+            canvasCtx.stroke();
+        }
+
+        // Toast Alerts system (No Native alerts allowed)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            
+            let bgStyle = 'bg-slate-900 border-slate-700 text-slate-100';
+            let icon = '<i class="fa-solid fa-circle-info text-blue-400"></i>';
+
+            if (type === 'success') {
+                bgStyle = 'bg-slate-900 border-green-500/30 text-slate-100';
+                icon = '<i class="fa-solid fa-circle-check text-green-400"></i>';
+            } else if (type === 'error') {
+                bgStyle = 'bg-slate-900 border-red-500/30 text-slate-100';
+                icon = '<i class="fa-solid fa-triangle-exclamation text-red-400"></i>';
+            } else if (type === 'warning') {
+                bgStyle = 'bg-slate-900 border-yellow-500/30 text-slate-100';
+                icon = '<i class="fa-solid fa-circle-exclamation text-yellow-400"></i>';
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `flex items-center space-x-3 border p-4 rounded-xl shadow-2xl transition duration-300 translate-y-4 opacity-0 ${bgStyle}`;
+            toast.innerHTML = `
+                <div class="flex-shrink-0 text-lg">${icon}</div>
+                <p class="text-xs font-semibold flex-grow leading-snug">${message}</p>
+                <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-slate-300 flex-shrink-0"><i class="fa-solid fa-xmark text-sm"></i></button>
+            `;
+
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+
+            // Auto dismiss toast after 4s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
